@@ -1,7 +1,7 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, h1, text, input, form, button, header, ul, li, footer)
-import Html.Attributes exposing (class, placeholder, type_, value)
+import Html exposing (Html, div, h1, text, input, form, button, thead, ul, li, footer, table, tr, th, td, tbody, tfoot, fieldset)
+import Html.Attributes exposing (class, placeholder, type_, value, colspan)
 import Html.Events exposing (onInput, onSubmit, onClick)
 
 
@@ -103,15 +103,17 @@ view model =
 
 programmerForm : Model -> Html Msg
 programmerForm model =
-    form [ onSubmit AddProgrammer ]
-        [ input [ type_ "text", placeholder "Meno programatora", onInput Input, value model.nameInput ] []
-        , button [ type_ "submit" ] [ text "Pridaj" ]
+    form [ onSubmit AddProgrammer, class "pure-form" ]
+        [ fieldset []
+            [ input [ type_ "text", placeholder "Meno programatora", onInput Input, value model.nameInput ] []
+            , button [ type_ "submit", class "button-success pure-button" ] [ text "Pridaj" ]
+            ]
         ]
 
 
 programmers : Model -> Html Msg
 programmers model =
-    div []
+    table [ class "pure-table pure-table-striped" ]
         [ programmersHeader
         , programmersList model
         , totalBeers model
@@ -120,9 +122,11 @@ programmers model =
 
 programmersHeader : Html a
 programmersHeader =
-    header []
-        [ div [] [ text "Meno" ]
-        , div [] [ text "Piv" ]
+    thead []
+        [ tr []
+            [ th [ colspan 2 ] [ text "Meno" ]
+            , th [ class "w20" ] [ text "Piv" ]
+            ]
         ]
 
 
@@ -134,15 +138,15 @@ programmersList model =
     model.programmers
         |> List.sortBy .name
         |> List.map programmer
-        |> ul []
+        |> tbody []
 
 
 programmer : Programmer -> Html Msg
 programmer programmer =
-    li []
-        [ div [] [ text programmer.name ]
-        , button [ type_ "button", onClick (DrinkBeer programmer.id) ] [ text "Pi pivo" ]
-        , div [] [ text (toString programmer.beers) ]
+    tr []
+        [ td [] [ text programmer.name ]
+        , td [ class "w20" ] [ button [ type_ "button", onClick (DrinkBeer programmer.id), class "pure-button pure-button-primary" ] [ text "Pi pivo" ] ]
+        , td [] [ text (toString programmer.beers) ]
         ]
 
 
@@ -153,9 +157,11 @@ totalBeers model =
             List.map .beers model.programmers
                 |> List.sum
     in
-        footer []
-            [ div [] [ text "Celkovo" ]
-            , div [] [ text (toString total) ]
+        tfoot []
+            [ tr []
+                [ td [ colspan 2, class "total-label" ] [ text "Celkovo" ]
+                , td [] [ text (toString total) ]
+                ]
             ]
 
 

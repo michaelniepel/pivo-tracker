@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Simple Elm app for PPP#1",
-    "repository": "https://github.com/michaelniepel/pivo-tracker",
+    "repository": "https://github.com/michaelniepel/pivo-tracker.git",
     "license": "BSD3",
     "source-directories": [
         "."
