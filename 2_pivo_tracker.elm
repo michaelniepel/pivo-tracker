@@ -12,6 +12,7 @@ type alias Model =
     { programmers : List Programmer
     , nameInput : String
     , paidBeers : Int
+    , totalBeers : Int
     }
 
 
@@ -29,6 +30,7 @@ initModel =
     { programmers = []
     , nameInput = ""
     , paidBeers = 0
+    , totalBeers = 0
     }
 
 
@@ -74,7 +76,24 @@ payBeersAndStay model who =
 
 payBeersAndGoHome : Model -> Int -> Model
 payBeersAndGoHome model who =
-    model
+    let
+        newModel =
+            payBeers model who
+    in
+        goHome newModel who
+
+
+goHome : Model -> Int -> Model
+goHome model who =
+    let
+        newProgrammers =
+            List.filter
+                (\programmer ->
+                    programmer.id /= who
+                )
+                model.programmers
+    in
+        { model | programmers = newProgrammers }
 
 
 payBeers : Model -> Int -> Model
@@ -127,6 +146,7 @@ drinkBeer model id =
     in
         { model
             | programmers = newProgrammers
+            , totalBeers = model.totalBeers + 1
         }
 
 
@@ -187,31 +207,27 @@ programmer : Programmer -> Html Msg
 programmer programmer =
     tr []
         [ td [] [ text programmer.name ]
-        , td [ class "w30" ]
+        , td [ class "w40" ]
             [ button [ type_ "button", onClick (DrinkBeer programmer.id), class "pure-button button-secondary" ] [ text "Pi pivo" ]
             , button [ type_ "button", onClick (PayBeersAndStay programmer.id), class "pure-button button-warning" ] [ text "Zaplat" ]
+            , button [ type_ "button", onClick (PayBeersAndGoHome programmer.id), class "pure-button button-error" ] [ text "Odchod" ]
             ]
-        , td [] [ text ((toString programmer.beersOnBill) ++ "/" ++ (toString programmer.beers) ++ "/" ++ (toString programmer.paid)) ]
+        , td [] [ text ((toString programmer.beersOnBill) ++ " / " ++ (toString programmer.beers) ++ " / " ++ (toString programmer.paid)) ]
         ]
 
 
 totalBeers : Model -> Html a
 totalBeers model =
-    let
-        total =
-            List.map .beers model.programmers
-                |> List.sum
-    in
-        tfoot []
-            [ tr []
-                [ td [ colspan 2, class "total-label" ] [ text "Celkovo piv" ]
-                , td [] [ text (toString total) ]
-                ]
-            , tr []
-                [ td [ colspan 2, class "total-label" ] [ text "Zaplatene" ]
-                , td [] [ text (toString model.paidBeers) ]
-                ]
+    tfoot []
+        [ tr []
+            [ td [ colspan 2, class "total-label" ] [ text "Celkovo piv" ]
+            , td [] [ text (toString model.totalBeers) ]
             ]
+        , tr []
+            [ td [ colspan 2, class "total-label" ] [ text "Zaplatene" ]
+            , td [] [ text (toString model.paidBeers) ]
+            ]
+        ]
 
 
 main : Program Never Model Msg
