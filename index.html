@@ -14,6 +14,17 @@
   <script src="bundle.js"></script>
   <script>
     var app = Elm.Main.embed(document.getElementById("app"));
+    
+    function checkKey(e) {
+      if (document.activeElement.tagName === 'INPUT') return
+      e = e || window.event
+      if (e.keyCode >= 49 && e.keyCode <= 57) {
+        var number = e.keyCode - 48
+        app.ports.piPivo.send(number)
+      }
+    }
+    document.onkeydown = checkKey
+
   </script>
 </body>
 
