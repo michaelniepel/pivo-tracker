@@ -1,24 +1,46 @@
 .pivo-tracker {
   margin: 0 auto;
-  width: 500px
+  width: 800px
 }
 
 table {
   width: 100%
 }
 
-.w20 {
-  width: 20%
+.w15 {
+  width: 15%
 }
 
-.button-success {
-  background: rgb(28, 184, 65);
+.w30 {
+  width: 30%
+}
+
+.button-success,
+.button-warning,
+.button-secondary {
   color: white;
   border-radius: 4px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2)
 }
 
+.button-success {
+  background: rgb(28, 184, 65);
+}
+
+.button-warning {
+  background: rgb(223, 117, 20);
+}
+
+.button-secondary {
+    background: rgb(66, 184, 221);
+}
+
+
 .total-label {
   text-align: right;
   font-weight: 700
+}
+
+table button {
+  margin-right: 5px
 }

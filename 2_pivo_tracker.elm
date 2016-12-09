@@ -11,6 +11,7 @@ import Html.Events exposing (onInput, onSubmit, onClick)
 type alias Model =
     { programmers : List Programmer
     , nameInput : String
+    , paidBeers : Int
     }
 
 
@@ -18,6 +19,8 @@ type alias Programmer =
     { id : Int
     , name : String
     , beers : Int
+    , beersOnBill : Int
+    , paid : Int
     }
 
 
@@ -25,6 +28,7 @@ initModel : Model
 initModel =
     { programmers = []
     , nameInput = ""
+    , paidBeers = 0
     }
 
 
@@ -36,6 +40,8 @@ type Msg
     = DrinkBeer Int
     | AddProgrammer
     | Input String
+    | PayBeersAndStay Int
+    | PayBeersAndGoHome Int
 
 
 update : Msg -> Model -> Model
@@ -54,12 +60,48 @@ update msg model =
             else
                 add model
 
+        PayBeersAndStay who ->
+            payBeersAndStay model who
+
+        PayBeersAndGoHome who ->
+            payBeersAndGoHome model who
+
+
+payBeersAndStay : Model -> Int -> Model
+payBeersAndStay model who =
+    payBeers model who
+
+
+payBeersAndGoHome : Model -> Int -> Model
+payBeersAndGoHome model who =
+    model
+
+
+payBeers : Model -> Int -> Model
+payBeers model who =
+    let
+        total =
+            List.map .beersOnBill model.programmers
+                |> List.sum
+
+        newProgrammers =
+            List.map
+                (\programmer ->
+                    if programmer.id == who then
+                        { programmer | beersOnBill = 0, paid = programmer.paid + total }
+                    else
+                        { programmer | beersOnBill = 0 }
+                )
+                model.programmers
+    in
+        { model | programmers = newProgrammers, paidBeers = model.paidBeers + total }
+
 
 add : Model -> Model
 add model =
     let
         programmer =
-            Programmer (List.length model.programmers) model.nameInput 0
+            Programmer (List.length model.programmers) model.nameInput 0 0 0
 
         newProgrammers =
             programmer :: model.programmers
@@ -77,7 +119,7 @@ drinkBeer model id =
             List.map
                 (\programmer ->
                     if programmer.id == id then
-                        { programmer | beers = programmer.beers + 1 }
+                        { programmer | beers = programmer.beers + 1, beersOnBill = programmer.beersOnBill + 1 }
                     else
                         programmer
                 )
@@ -125,7 +167,7 @@ programmersHeader =
     thead []
         [ tr []
             [ th [ colspan 2 ] [ text "Meno" ]
-            , th [ class "w20" ] [ text "Piv" ]
+            , th [ class "w15" ] [ text "Na ucte / Vypil / Zaplatil" ]
             ]
         ]
 
@@ -145,8 +187,11 @@ programmer : Programmer -> Html Msg
 programmer programmer =
     tr []
         [ td [] [ text programmer.name ]
-        , td [ class "w20" ] [ button [ type_ "button", onClick (DrinkBeer programmer.id), class "pure-button pure-button-primary" ] [ text "Pi pivo" ] ]
-        , td [] [ text (toString programmer.beers) ]
+        , td [ class "w30" ]
+            [ button [ type_ "button", onClick (DrinkBeer programmer.id), class "pure-button button-secondary" ] [ text "Pi pivo" ]
+            , button [ type_ "button", onClick (PayBeersAndStay programmer.id), class "pure-button button-warning" ] [ text "Zaplat" ]
+            ]
+        , td [] [ text ((toString programmer.beersOnBill) ++ "/" ++ (toString programmer.beers) ++ "/" ++ (toString programmer.paid)) ]
         ]
 
 
@@ -159,8 +204,12 @@ totalBeers model =
     in
         tfoot []
             [ tr []
-                [ td [ colspan 2, class "total-label" ] [ text "Celkovo" ]
+                [ td [ colspan 2, class "total-label" ] [ text "Celkovo piv" ]
                 , td [] [ text (toString total) ]
+                ]
+            , tr []
+                [ td [ colspan 2, class "total-label" ] [ text "Zaplatene" ]
+                , td [] [ text (toString model.paidBeers) ]
                 ]
             ]
 
