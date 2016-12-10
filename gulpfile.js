@@ -8,7 +8,7 @@ var gulp = require('gulp'),
   clear = require('clear'),
   counter = 0;
 
-var cmd = 'elm make ./2_pivo_tracker.elm --output ./bundle.js';
+var cmd = 'elm make ./2_pivo_tracker.elm --debug --output ./bundle.js';
 clear();
 gulp.task('default', ['server', 'watch', 'elm']);
 
