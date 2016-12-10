@@ -1,6 +1,6 @@
 port module Main exposing (..)
 
-import Html exposing (Html, div, h1, text, input, form, button, thead, ul, li, footer, table, tr, th, td, tbody, tfoot, fieldset)
+import Html exposing (Html, div, h1, text, input, form, button, thead, ul, li, footer, table, tr, th, td, tbody, tfoot, fieldset, p)
 import Html.Attributes exposing (class, placeholder, type_, value, colspan, disabled)
 import Html.Events exposing (onInput, onSubmit, onClick)
 import Json.Encode as Encode
@@ -22,6 +22,7 @@ type alias Model =
     , beersOnServer : Int
     , totalBeers : Int
     , sending : Bool
+    , error : Maybe String
     }
 
 
@@ -42,6 +43,7 @@ initModel =
       , beersOnServer = 0
       , totalBeers = 0
       , sending = False
+      , error = Nothing
       }
     , Cmd.none
     )
@@ -93,8 +95,8 @@ update msg model =
         DoPostBeers (Ok response) ->
             ( { model | sending = False, beersOnServer = model.paidBeers }, Cmd.none )
 
-        DoPostBeers (Err _) ->
-            ( { model | sending = False }, Cmd.none )
+        DoPostBeers (Err err) ->
+            ( { model | sending = False, error = Just (toString err) }, Cmd.none )
 
 
 payBeersAndStay : Model -> Int -> Model
@@ -186,9 +188,20 @@ view : Model -> Html Msg
 view model =
     div [ class "pivo-tracker" ]
         [ h1 [] [ text "Pivo tracker" ]
+        , errorMessage model
         , programmers model
         , programmerForm model
         ]
+
+
+errorMessage : Model -> Html a
+errorMessage model =
+    case model.error of
+        Nothing ->
+            p [] []
+
+        Just err ->
+            p [] [ text err ]
 
 
 programmerForm : Model -> Html Msg
