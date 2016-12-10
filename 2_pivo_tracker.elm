@@ -1,8 +1,15 @@
 port module Main exposing (..)
 
 import Html exposing (Html, div, h1, text, input, form, button, thead, ul, li, footer, table, tr, th, td, tbody, tfoot, fieldset)
-import Html.Attributes exposing (class, placeholder, type_, value, colspan)
+import Html.Attributes exposing (class, placeholder, type_, value, colspan, disabled)
 import Html.Events exposing (onInput, onSubmit, onClick)
+import Json.Encode as Encode
+import Json.Decode as Decode
+
+
+-- elm package install elm-lang/http
+
+import Http
 
 
 -- MODEL
@@ -12,7 +19,9 @@ type alias Model =
     { programmers : List Programmer
     , nameInput : String
     , paidBeers : Int
+    , beersOnServer : Int
     , totalBeers : Int
+    , sending : Bool
     }
 
 
@@ -30,7 +39,9 @@ initModel =
     ( { programmers = []
       , nameInput = ""
       , paidBeers = 0
+      , beersOnServer = 0
       , totalBeers = 0
+      , sending = False
       }
     , Cmd.none
     )
@@ -47,6 +58,8 @@ type Msg
     | Input String
     | PayBeersAndStay Int
     | PayBeersAndGoHome Int
+    | PostBeers
+    | DoPostBeers (Result Http.Error Response)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -73,6 +86,15 @@ update msg model =
 
         PayBeersAndGoHome who ->
             ( payBeersAndGoHome model who, Cmd.none )
+
+        PostBeers ->
+            ( { model | sending = True }, postBeers model.paidBeers )
+
+        DoPostBeers (Ok response) ->
+            ( { model | sending = False, beersOnServer = model.paidBeers }, Cmd.none )
+
+        DoPostBeers (Err _) ->
+            ( { model | sending = False }, Cmd.none )
 
 
 payBeersAndStay : Model -> Int -> Model
@@ -224,7 +246,7 @@ programmer programmer =
         ]
 
 
-totalBeers : Model -> Html a
+totalBeers : Model -> Html Msg
 totalBeers model =
     tfoot []
         [ tr []
@@ -232,8 +254,12 @@ totalBeers model =
             , td [] [ text (toString model.totalBeers) ]
             ]
         , tr []
-            [ td [ colspan 3, class "total-label" ] [ text "Zaplatene" ]
-            , td [] [ text (toString model.paidBeers) ]
+            [ td [ colspan 3, class "total-label" ] [ text "Zaplatene / Na servri" ]
+            , td [] [ text ((toString model.paidBeers) ++ " / " ++ (toString model.beersOnServer)) ]
+            ]
+        , tr []
+            [ td [ colspan 3, class "total-label" ] [ text "Posli na server" ]
+            , td [] [ button [ type_ "button", disabled (model.sending || (model.beersOnServer >= model.paidBeers)), onClick PostBeers, class "pure-button button-success" ] [ text "Posli" ] ]
             ]
         ]
 
@@ -248,6 +274,38 @@ port piPivo : (Int -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     piPivo DrinkBeerFromKey
+
+
+
+-- REST
+
+
+apiUrl : String
+apiUrl =
+    "http://private-d3f1e-pivotracker.apiary-mock.com/bills"
+
+
+billEncoder : Int -> Encode.Value
+billEncoder beers =
+    Encode.object
+        [ ( "beers", Encode.int beers ) ]
+
+
+type alias Response =
+    { status : String
+    }
+
+
+responseDecoder : Decode.Decoder Response
+responseDecoder =
+    Decode.map Response
+        (Decode.field "status" Decode.string)
+
+
+postBeers : Int -> Cmd Msg
+postBeers beers =
+    Http.send DoPostBeers <|
+        Http.post apiUrl (Http.jsonBody (billEncoder beers)) responseDecoder
 
 
 main : Program Never Model Msg
